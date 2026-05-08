@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    NSFAS Disbursement — Full 8-Stage E2E Test Suite
+    Runs all stages sequentially in order (parallel=false is critical here).
+    Sequence number captured in Stage 1 is shared across all stages.
+-->
+<suite name="NSFAS Disbursement E2E Suite" verbose="2" parallel="none">
+
+    <listeners>
+        <listener class-name="com.nsfas.automation.listeners.TestListener"/>
+    </listeners>
+
+    <test name="Stage 1 - OperationsDev - Create Schedule">
+        <groups>
+            <run><include name="stage1"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step1_OperationsDevTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 2 - FinanceReviewer - Review and Approve">
+        <groups>
+            <run><include name="stage2"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step2_FinanceReviewerTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 3 - OperationsInitiator - Initiate Disbursement">
+        <groups>
+            <run><include name="stage3"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step3_OperationsInitiatorTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 4 - FirstApprover - Approve to Senior Manager">
+        <groups>
+            <run><include name="stage4"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step4_FirstApproverTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 5 - FinanceSeniorManager - Approve to COO">
+        <groups>
+            <run><include name="stage5"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step5_FinanceSeniorManagerTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 6 - FinanceCOO - Approve to CFO">
+        <groups>
+            <run><include name="stage6"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step6_FinanceCOOTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 7 - FinanceCFO - Approve to CEO">
+        <groups>
+            <run><include name="stage7"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step7_FinanceCFOTest"/>
+        </classes>
+    </test>
+
+    <test name="Stage 8 - FinanceCEO - Final Approval and Generate Payment Files">
+        <groups>
+            <run><include name="stage8"/></run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.disbursement.Step8_FinanceCEOTest"/>
+        </classes>
+    </test>
+
+</suite>
