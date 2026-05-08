@@ -1,0 +1,23 @@
+# Copy this file to config.properties and fill in your values
+# config.properties is git-ignored to protect credentials
+
+app.name=NSFAS
+environment=QA
+base.url=https://your-nsfas-app-url.co.za
+
+# Browser  (chrome | firefox | edge)
+browser=chrome
+headless=false
+
+# Timeouts (seconds)
+implicit.wait=10
+explicit.wait=20
+page.load.timeout=30
+
+# Credentials
+app.username=your_username
+app.password=your_password
+
+# Reporting
+extent.report.path=test-output/reports/
+screenshot.on.failure=true

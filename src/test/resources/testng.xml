@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="NSFAS Automation Suite" verbose="2" parallel="methods" thread-count="3">
+
+    <listeners>
+        <listener class-name="com.nsfas.automation.listeners.TestListener"/>
+    </listeners>
+
+    <!-- ── Smoke Tests ── -->
+    <test name="Smoke Tests">
+        <groups>
+            <run>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.SampleLoginTest"/>
+        </classes>
+    </test>
+
+    <!-- ── Regression Tests ── -->
+    <test name="Regression Tests">
+        <groups>
+            <run>
+                <include name="regression"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.nsfas.automation.tests.SampleLoginTest"/>
+        </classes>
+    </test>
+
+</suite>

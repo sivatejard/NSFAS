@@ -1,0 +1,25 @@
+# Maven build output
+target/
+*.class
+
+# Eclipse project files
+.classpath
+.project
+.settings/
+.factorypath
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Test output (reports, screenshots, logs)
+test-output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Credentials - never commit these
+src/test/resources/config.properties
