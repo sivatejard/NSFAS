@@ -4,56 +4,62 @@ import com.nsfas.automation.pages.BasePage;
 import org.openqa.selenium.By;
 
 /**
- * Case Management page — My Team Cases, search, and view/edit.
- * UPDATE locators after inspecting actual app HTML.
+ * Case Management — My Team Cases page (/casemanagement/myteamcases)
+ *
+ * Confirmed structure from live app:
+ *  - DataTable id="dt-teams" with wrapper id="dt-teams_wrapper"
+ *  - Search input inside id="dt-teams_filter"
+ *  - Each row has "View" (casedetailsview) and "Edit" (casedetails) links
+ *  - Columns: Request No | Created Date | Current Step | SLA Remaining |
+ *             Status | Process Status | Process Reference | Workflow | View Request
  */
 public class CaseManagementPage extends BasePage {
 
-    // ── Locators ── UPDATE after inspecting actual app HTML ──
-    private final By myTeamCasesTab      = By.xpath("//a[contains(text(),'My Team') or contains(@href,'MyTeam') or contains(text(),'My team cases')]");
-    private final By searchInput         = By.xpath("//input[@type='search' or contains(@placeholder,'Search') or @id='searchInput']");
-    private final By searchButton        = By.xpath("//button[contains(text(),'Search') or @type='submit' and contains(@class,'search')]");
-    private final By viewEditButton      = By.xpath("(//a[contains(text(),'View') or contains(text(),'Edit') or contains(text(),'View/Edit')])[1]");
-    private final By caseTable           = By.xpath("//table[contains(@id,'case') or contains(@class,'case')]");
-    private final By firstCaseRow        = By.xpath("//table//tbody//tr[1]");
-    private final By noRecordsMsg        = By.xpath("//*[contains(text(),'No records') or contains(text(),'No data')]");
-    private final By loadingSpinner      = By.xpath("//*[contains(@class,'spinner') or contains(@class,'loading')]");
+    private final By dtSearchInput   = By.cssSelector("#dt-teams_filter input[type='search']");
+    private final By dataTable       = By.id("dt-teams");
+    private final By loadingOverlay  = By.cssSelector(".dataTables_processing");
+    private final By noRecordsMsg    = By.cssSelector("#dt-teams td.dataTables_empty");
 
-    public void clickMyTeamCases() {
-        log.info("Clicking My Team Cases tab");
-        click(myTeamCasesTab);
+    // Edit link navigates to /casemanagement/casedetails?id=<guid> — where routing is done
+    private final By firstEditLink   = By.xpath("(//a[contains(@href,'casedetails') and not(contains(@href,'casedetailsview'))])[1]");
+
+    private String getAppRoot() {
+        return driver.getCurrentUrl().replaceAll("(https?://[^/]+).*", "$1");
+    }
+
+    public void navigateToMyTeamCases() {
+        log.info("Navigating to My Team Cases");
+        driver.get(getAppRoot() + "/casemanagement/myteamcases");
         wait.waitForPageLoad();
-        waitForTableToLoad();
+        waitForTable();
     }
 
     public void searchBySequenceNumber(String sequenceNumber) {
-        log.info("Searching for sequence number: {}", sequenceNumber);
-        wait.waitForVisibility(searchInput).clear();
-        type(searchInput, sequenceNumber);
-
-        if (isElementPresent(searchButton)) {
-            click(searchButton);
-        } else {
-            pressEnter(searchInput);
-        }
-        waitForTableToLoad();
-        log.info("Search complete for: {}", sequenceNumber);
+        log.info("Searching My Team Cases for: {}", sequenceNumber);
+        wait.waitForVisibility(dtSearchInput).clear();
+        type(dtSearchInput, sequenceNumber);
+        waitForTable();
     }
 
-    public void clickViewEdit() {
-        log.info("Clicking View/Edit on case");
-        wait.waitForClickable(viewEditButton).click();
+    public void clickEditOnFirstResult() {
+        log.info("Clicking Edit on first matching case");
+        wait.waitForClickable(firstEditLink).click();
         wait.waitForPageLoad();
     }
 
-    public boolean isCaseFound() {
-        return isElementPresent(caseTable) && !isElementPresent(noRecordsMsg);
+    // Alias used by DisbursementBaseTest
+    public void clickViewEdit() {
+        clickEditOnFirstResult();
     }
 
-    private void waitForTableToLoad() {
-        if (isElementPresent(loadingSpinner)) {
-            wait.waitForInvisibility(loadingSpinner, 30);
-        }
+    public boolean isCaseFound() {
+        return isElementPresent(dataTable) && !isElementPresent(noRecordsMsg);
+    }
+
+    private void waitForTable() {
+        try {
+            wait.waitForInvisibility(loadingOverlay, 20);
+        } catch (Exception ignored) {}
         wait.waitForPageLoad();
     }
 }

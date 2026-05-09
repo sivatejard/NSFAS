@@ -68,12 +68,11 @@ public abstract class DisbursementBaseTest {
     }
 
     /**
-     * Reusable: navigate to Case Management → search sequence number → click View/Edit.
+     * Reusable: navigate to My Team Cases → search sequence number → click View/Edit.
      */
     protected void openCaseBySequenceNumber(String sequenceNumber) {
-        navigationPage().goToCaseManagement();
         CaseManagementPage casePage = caseManagementPage();
-        casePage.clickMyTeamCases();
+        casePage.navigateToMyTeamCases();
         casePage.searchBySequenceNumber(sequenceNumber);
         casePage.clickViewEdit();
         log.info("Case opened for sequence number: {}", sequenceNumber);

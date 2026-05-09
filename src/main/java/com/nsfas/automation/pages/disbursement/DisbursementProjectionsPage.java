@@ -7,48 +7,62 @@ import org.openqa.selenium.WebElement;
 import java.util.List;
 
 /**
- * Disbursement Projections page — shows projection results and sequence number.
- * UPDATE locators after inspecting actual app HTML.
+ * Disbursement Projections page — /DisbursementProjections/Index
+ *
+ * Confirmed from live app:
+ *  - Filter fields: InstitutionType (Select2), ProjectionStatus (Select2),
+ *    ProjectionRunFromDate, ProjectionRunToDate (date inputs)
+ *  - Filter/Show button: <input type='button' class='btn btn-primary'>
+ *  - Results displayed in a DataTable after filtering
+ *
+ * "Sequence number" = the projection reference ID in the first data column
+ * of the first result row (used to locate the corresponding case).
  */
 public class DisbursementProjectionsPage extends BasePage {
 
-    // ── Locators ── UPDATE after inspecting actual app HTML ──
-    private final By showResultButton      = By.xpath("//button[contains(text(),'Show result') or contains(text(),'Show Result') or @id='btnShowResult']");
-    private final By sequenceNumberCell    = By.xpath("//table//td[contains(@class,'sequence') or contains(@class,'seqNo')] | //td[@data-label='Sequence Number']");
-    private final By firstRowSeqNumber     = By.xpath("(//table//tbody//tr[1]//td[1])[1]");
-    private final By projectionResultTable = By.xpath("//table[contains(@id,'projection') or contains(@class,'projection')]");
-    private final By loadingSpinner        = By.xpath("//*[contains(@class,'spinner') or contains(@class,'loading')]");
+    // Filter area — confirmed element IDs
+    private final By institutionTypeFilter  = By.id("InstitutionType");
+    private final By statusFilter           = By.id("ProjectionStatus");
+    private final By fromDateFilter         = By.id("ProjectionRunFromDate");
+    private final By toDateFilter           = By.id("ProjectionRunToDate");
+
+    // "Show Result" / filter trigger button (type='button', class contains btn-primary)
+    private final By showResultButton       = By.cssSelector("#kt_content_container input[type='button'].btn-primary, #kt_content input[type='button'].btn-primary, input.btn-primary[type='button']");
+
+    // Results table
+    private final By projectionTable        = By.cssSelector("table.dataTable, table[id*='dt'], table[id*='projection']");
+    private final By loadingOverlay         = By.cssSelector(".dataTables_processing, .spinner-border");
+
+    // Sequence number — first td of first body row (projection reference/ID column)
+    private final By firstRowFirstCell      = By.cssSelector("table tbody tr:first-child td:first-child");
 
     public void clickShowResult() {
-        log.info("Clicking Show Result button");
-        click(showResultButton);
-        waitForResultsToLoad();
+        log.info("Clicking Show Result / filter button");
+        jsClick(showResultButton);
+        waitForResults();
         log.info("Results loaded");
     }
 
-    private void waitForResultsToLoad() {
-        if (isElementPresent(loadingSpinner)) {
-            wait.waitForInvisibility(loadingSpinner, 60);
-        }
-        wait.waitForPageLoad();
-    }
-
     public String captureSequenceNumber() {
-        wait.waitForVisibility(projectionResultTable, 30);
+        waitForResults();
         String seqNo = "";
-
-        if (isElementPresent(sequenceNumberCell)) {
-            seqNo = getText(sequenceNumberCell).trim();
-        } else {
-            // fallback: grab first cell of first data row
-            seqNo = getText(firstRowSeqNumber).trim();
+        try {
+            seqNo = getText(firstRowFirstCell).trim();
+        } catch (Exception e) {
+            log.warn("Could not read sequence number from first row: {}", e.getMessage());
         }
-
         log.info("Captured projection sequence number: {}", seqNo);
         return seqNo;
     }
 
     public boolean isProjectionResultDisplayed() {
-        return isElementPresent(projectionResultTable);
+        return isElementPresent(projectionTable);
+    }
+
+    private void waitForResults() {
+        try {
+            wait.waitForInvisibility(loadingOverlay, 60);
+        } catch (Exception ignored) {}
+        wait.waitForPageLoad();
     }
 }

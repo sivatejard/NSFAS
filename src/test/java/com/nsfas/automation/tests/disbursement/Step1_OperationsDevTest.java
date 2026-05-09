@@ -25,14 +25,13 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
                 "Login failed for user: " + username);
         log.info("Stage 1 — Logged in as: {}", username);
 
-        // ── Navigate to Disbursements ──────────────────────────
-        navigationPage().goToDisbursements();
+        // ── Navigate to Create Schedule ───────────────────────
+        navigationPage().goToCreateSchedule();
 
-        // ── Create Schedule ────────────────────────────────────
+        // ── Fill Create Schedule Form ──────────────────────────
         CreateSchedulePage schedulePage = new CreateSchedulePage();
-        schedulePage.clickCreateSchedule();
 
-        schedulePage.selectInstituteType(ConfigReader.get("schedule.institute.type", "All institutions"));
+        schedulePage.selectInstitutionType(ConfigReader.get("schedule.institute.type", "All Institutions"));
         schedulePage.selectAcademicYear(ConfigReader.get("schedule.academic.year", "2025"));
         schedulePage.selectAllInstitutions();
         schedulePage.selectFunderType(ConfigReader.get("schedule.funder.type", "DHET"));

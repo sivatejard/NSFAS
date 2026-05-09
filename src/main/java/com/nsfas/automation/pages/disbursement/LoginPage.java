@@ -9,11 +9,11 @@ import org.openqa.selenium.By;
  */
 public class LoginPage extends BasePage {
 
-    // ── Locators ── UPDATE these after inspecting the actual app HTML ──
+    // Confirmed from live app HTML inspection
     private final By usernameField = By.id("Input_UserName");
-    private final By passwordField = By.id("Input_Password");
-    private final By loginButton   = By.id("login-submit");
-    private final By errorMessage  = By.cssSelector(".validation-summary-errors, .text-danger");
+    private final By passwordField = By.id("passwordInput");
+    private final By loginButton   = By.id("js-login-btn");
+    private final By errorMessage  = By.cssSelector(".alert-danger li, .validation-summary-errors li");
     private final By logoutLink    = By.cssSelector("a[href*='Logout'], form[action*='Logout'] button");
 
     public LoginPage loginAs(String username, String password) {
