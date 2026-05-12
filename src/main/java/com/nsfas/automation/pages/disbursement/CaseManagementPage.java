@@ -45,6 +45,7 @@ public class CaseManagementPage extends BasePage {
         log.info("Clicking Edit on first matching case");
         wait.waitForClickable(firstEditLink).click();
         wait.waitForPageLoad();
+        wait.waitForLoadingOverlay(60);  // case details page shows overlay while loading
     }
 
     // Alias used by DisbursementBaseTest

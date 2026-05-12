@@ -2,6 +2,7 @@ package com.nsfas.automation.pages.disbursement;
 
 import com.nsfas.automation.pages.BasePage;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * Request Attributes & Routing tab on the case details page
@@ -19,16 +20,19 @@ public class RequestAttributeRoutingPage extends BasePage {
     private final By routingTabLink = By.xpath(
         "//a[@data-toggle='tab' and contains(normalize-space(),'Request Attributes')]");
 
-    // Comment inputs inside accordion sections — each section has a predictable accordion div
-    // Section names from live app: FinanceReview, First Approver note, FSManager, COO, CFO, CEO
-    // The collapse divs' ids match the data-target on the button headers.
-    // We locate inputs relative to the section button so it is resilient even if div IDs change.
-    private By commentInSection(String sectionButtonText) {
+    // Confirmed from live app inspection — all sections are Bootstrap accordions.
+    // Section names: "FinanceReview", "Operations", "First Approver note",
+    //                "FSManager", "COO", "CFO", "CEO"
+    private By commentInSection(String sectionName) {
         return By.xpath(
-            "//button[@type='button' and normalize-space()='" + sectionButtonText + "']" +
-            "/ancestor::div[contains(@class,'accordion')]" +
-            "/following-sibling::div[contains(@class,'collapse')]" +
-            "//input[contains(@class,'qform')]");
+            "//h2[normalize-space(.)='" + sectionName + "']/following::input[1]"
+        );
+    }
+
+    private By accordionButtonFor(String sectionName) {
+        return By.xpath(
+            "//button[contains(@class,'accordion-button') and normalize-space()='" + sectionName + "']"
+        );
     }
 
     // Routing controls at bottom of the tab pane
@@ -42,17 +46,19 @@ public class RequestAttributeRoutingPage extends BasePage {
     // ── Navigation ────────────────────────────────────────────────────────────
 
     public void clickRequestAttributeAndRouting() {
+        pause();
         log.info("Clicking 'Request Attributes & Routing' tab");
         scrollToElement(routingTabLink);
         jsClick(routingTabLink);
         try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
         wait.waitForPageLoad();
+        wait.waitForLoadingOverlay(60);
     }
 
     // ── Comment entry per approver role ───────────────────────────────────────
 
     public void enterFinanceComment(String comment) {
-        log.info("Entering Finance Review comment");
+        log.info("Entering Finance Reviewer comment");
         enterCommentInSection("FinanceReview", comment);
     }
 
@@ -82,13 +88,34 @@ public class RequestAttributeRoutingPage extends BasePage {
     }
 
     private void enterCommentInSection(String sectionName, String comment) {
+        pause();
+        log.info("Entering comment in section: '{}'", sectionName);
+        // Expand the accordion section if it is currently collapsed
+        By btn = accordionButtonFor(sectionName);
+        if (isElementPresent(btn)) {
+            WebElement btnEl = driver.findElement(btn);
+            String expanded = btnEl.getAttribute("aria-expanded");
+            if (!"true".equals(expanded)) {
+                log.info("Accordion '{}' is collapsed — clicking to expand", sectionName);
+                jsClick(btnEl);
+                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            }
+        } else {
+            log.warn("Accordion button for section '{}' not found", sectionName);
+        }
         By field = commentInSection(sectionName);
         if (isElementPresent(field)) {
+            scrollToElement(field);
             clearAndType(field, comment);
-            click(saveButton);
+            pause();
+            // Overlay can appear after typing (onchange AJAX) — wait before clicking Save
+            wait.waitForLoadingOverlay(60);
+            scrollToElement(saveButton);
+            jsClick(saveButton);
             wait.waitForPageLoad();
+            wait.waitForLoadingOverlay(60);
         } else {
-            log.warn("Comment field for section '{}' not found — section may not be visible", sectionName);
+            log.warn("Comment input for section '{}' NOT FOUND", sectionName);
         }
     }
 
@@ -100,10 +127,15 @@ public class RequestAttributeRoutingPage extends BasePage {
     }
 
     public void clickRouteButton() {
+        pause();
         log.info("Clicking Route button");
+        scrollToBottom();
+        wait.waitForLoadingOverlay(60);
         scrollToElement(routeButton);
+        pause();
         jsClick(routeButton);
         wait.waitForPageLoad();
+        wait.waitForLoadingOverlay(120);
         log.info("Route button clicked — case routed to next step");
     }
 
@@ -114,13 +146,53 @@ public class RequestAttributeRoutingPage extends BasePage {
         return "";
     }
 
+    /** Returns all option texts from the NextStepId dropdown, comma-separated. */
+    public String getAvailableNextStepOptions() {
+        if (!isElementPresent(nextStepDropdown)) return "(NextStepId dropdown not found)";
+        try {
+            return String.join(", ", getAllDropdownOptions(nextStepDropdown));
+        } catch (Exception e) {
+            return "(could not read options: " + e.getMessage() + ")";
+        }
+    }
+
     // Aliases for backward compatibility with existing test code
     public void enterFinancialComment(String comment) {
         enterFinanceComment(comment);
     }
 
+    /**
+     * Scrolls to the Pick an Outcome dropdown, selects by case-insensitive partial match,
+     * then waits for any overlay before proceeding.
+     */
     public void selectOutcome(String outcomeText) {
-        selectNextStep(outcomeText);
+        pause();
+        if (!isElementPresent(nextStepDropdown)) {
+            log.warn("NextStepId dropdown not present — skipping outcome selection");
+            return;
+        }
+        scrollToBottom();
+        wait.waitForLoadingOverlay(60);
+        scrollToElement(nextStepDropdown);
+        pause();
+        String js =
+            "var sel=document.getElementById('NextStepId');" +
+            "var target='" + outcomeText.replace("'", "\\'").toLowerCase() + "';" +
+            "for(var i=0;i<sel.options.length;i++){" +
+            "  if(sel.options[i].text.trim().toLowerCase().indexOf(target)>=0){" +
+            "    sel.value=sel.options[i].value;" +
+            "    sel.dispatchEvent(new Event('change',{bubbles:true}));" +
+            "    return sel.options[i].text;" +
+            "  }" +
+            "}" +
+            "return null;";
+        Object matched = executeJS(js);
+        if (matched == null) {
+            log.warn("selectOutcome: no option matched '{}' — available: {}", outcomeText, getAvailableNextStepOptions());
+        } else {
+            log.info("selectOutcome: selected '{}'", matched);
+        }
+        pause();
     }
 
     public boolean isRoutingTabActive() {

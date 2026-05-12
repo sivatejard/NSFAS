@@ -10,8 +10,8 @@ import org.openqa.selenium.By;
  */
 public class RelatedEntitiesPage extends BasePage {
 
-    // ── Locators ── UPDATE after inspecting actual app HTML ──
-    private final By relatedEntitiesTab      = By.xpath("//a[contains(text(),'Related Entities') or contains(@href,'RelatedEntities')]");
+    // Tab uses Bootstrap 4 data-toggle="tab" — same pattern as RequestAttributeRoutingPage
+    private final By relatedEntitiesTab      = By.xpath("//a[@data-toggle='tab' and contains(normalize-space(),'Related Entities')]");
     private final By overallSummarySection   = By.xpath("//*[contains(text(),'Overall summary') or contains(@id,'OverallSummary')]");
     private final By noOfStudents            = By.xpath("//*[@id='noOfStudents' or contains(@class,'student-count') or contains(text(),'students')]/following-sibling::* | //td[@data-label='No. of Students']");
     private final By directPaymentTotal      = By.xpath("//*[@id='directPaymentTotal' or contains(@data-label,'Direct payment')]");
@@ -24,9 +24,11 @@ public class RelatedEntitiesPage extends BasePage {
 
     public void clickRelatedEntities() {
         log.info("Clicking Related Entities tab");
+        wait.waitForLoadingOverlay(60);
         scrollToElement(relatedEntitiesTab);
-        click(relatedEntitiesTab);
+        jsClick(relatedEntitiesTab);
         wait.waitForPageLoad();
+        wait.waitForLoadingOverlay(30);
     }
 
     public boolean isOverallSummaryVisible() {

@@ -48,7 +48,8 @@ public abstract class DisbursementBaseTest {
             log.error("Test FAILED: {}", result.getName());
         }
         log.info("====== Finished: {} | {} ======", result.getName(), statusLabel(result.getStatus()));
-        DriverManager.quitDriver();
+        // Browser intentionally left open (pass or fail) during development.
+        // Re-enable DriverManager.quitDriver() once all 8 stages are stable.
     }
 
     protected LoginPage loginPage() {

@@ -14,8 +14,7 @@ import org.testng.annotations.Test;
 public class Step5_FinanceSeniorManagerTest extends DisbursementBaseTest {
 
     @Test(description = "Stage 5: Finance Senior Manager approves and routes to COO",
-          groups = {"disbursement", "stage5"},
-          dependsOnGroups = {"stage4"})
+          groups = {"disbursement", "stage5"})
     public void stage5_seniorManagerRoute() {
 
         // ── Login ──────────────────────────────────────────────
@@ -26,8 +25,12 @@ public class Step5_FinanceSeniorManagerTest extends DisbursementBaseTest {
                 "Login failed for user: " + username);
         log.info("Stage 5 — Logged in as: {}", username);
 
+        // ── Resolve sequence number ────────────────────────────
+        String sequenceNumber = ConfigReader.get("sequence.number", "").trim();
+        if (sequenceNumber.isEmpty()) sequenceNumber = SharedTestData.getSequenceNumber();
+        log.info("Stage 5 — Using sequence number: {}", sequenceNumber);
+
         // ── Open Case ──────────────────────────────────────────
-        String sequenceNumber = SharedTestData.getSequenceNumber();
         openCaseBySequenceNumber(sequenceNumber);
 
         // ── Approve and Route to COO ───────────────────────────

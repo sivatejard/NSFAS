@@ -44,7 +44,7 @@ public class DriverManager {
                 driver = new EdgeDriver(edgeOptions);
                 break;
             default:
-                WebDriverManager.chromedriver().setup();
+                setupChromeDriver();
                 driver = new ChromeDriver(buildChromeOptions(headless));
                 break;
         }
@@ -74,6 +74,34 @@ public class DriverManager {
             driverThreadLocal.remove();
             log.info("Driver closed and removed from ThreadLocal");
         }
+    }
+
+    /**
+     * Sets up ChromeDriver using a local cached driver when available,
+     * falling back to WebDriverManager download if not found.
+     * This avoids corporate network blocks on driver download endpoints.
+     */
+    private static void setupChromeDriver() {
+        String localDriver = ConfigReader.get("webdriver.chrome.driver", "");
+        if (!localDriver.isEmpty()) {
+            log.info("Using chromedriver from config: {}", localDriver);
+            System.setProperty("webdriver.chrome.driver", localDriver);
+            return;
+        }
+        // Auto-detect from common local cache locations (Python wdm cache)
+        String[] candidates = {
+            System.getProperty("user.home") + "\\.wdm\\drivers\\chromedriver\\win64\\148.0.7778.97\\chromedriver-win32\\chromedriver.exe",
+            System.getProperty("user.home") + "\\.cache\\selenium\\chromedriver\\win64\\chromedriver.exe"
+        };
+        for (String path : candidates) {
+            if (new java.io.File(path).exists()) {
+                log.info("Using cached chromedriver: {}", path);
+                System.setProperty("webdriver.chrome.driver", path);
+                return;
+            }
+        }
+        log.info("Cached chromedriver not found — attempting WebDriverManager download");
+        WebDriverManager.chromedriver().timeout(30).setup();
     }
 
     private static ChromeOptions buildChromeOptions(boolean headless) {

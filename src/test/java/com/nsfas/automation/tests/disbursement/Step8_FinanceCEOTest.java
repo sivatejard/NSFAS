@@ -14,8 +14,7 @@ import org.testng.annotations.Test;
 public class Step8_FinanceCEOTest extends DisbursementBaseTest {
 
     @Test(description = "Stage 8: Finance CEO final approval — Generate Payment Files",
-          groups = {"disbursement", "stage8"},
-          dependsOnGroups = {"stage7"})
+          groups = {"disbursement", "stage8"})
     public void stage8_ceoFinalApprovalAndGeneratePayment() {
 
         // ── Login ──────────────────────────────────────────────
@@ -26,8 +25,12 @@ public class Step8_FinanceCEOTest extends DisbursementBaseTest {
                 "Login failed for user: " + username);
         log.info("Stage 8 — Logged in as: {}", username);
 
+        // ── Resolve sequence number ────────────────────────────
+        String sequenceNumber = ConfigReader.get("sequence.number", "").trim();
+        if (sequenceNumber.isEmpty()) sequenceNumber = SharedTestData.getSequenceNumber();
+        log.info("Stage 8 — Using sequence number: {}", sequenceNumber);
+
         // ── Open Case ──────────────────────────────────────────
-        String sequenceNumber = SharedTestData.getSequenceNumber();
         openCaseBySequenceNumber(sequenceNumber);
 
         // ── Final Approval — Generate Payment Files ────────────

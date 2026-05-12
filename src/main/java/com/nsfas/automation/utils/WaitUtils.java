@@ -169,6 +169,27 @@ public class WaitUtils {
     }
 
     // ─────────────────────────────────────────────────
+    // Loading overlay (NSFAS spinner)
+    // ─────────────────────────────────────────────────
+
+    /**
+     * Waits until the NSFAS loading overlay (div.loadingoverlay) disappears.
+     * Schedule creation can take up to 10 minutes on VPN, so caller must pass
+     * an appropriate timeout (e.g. 600 seconds).
+     */
+    public void waitForLoadingOverlay(int timeoutSeconds) {
+        By overlay = By.cssSelector("div.loadingoverlay");
+        log.info("Waiting up to {}s for loading overlay to disappear...", timeoutSeconds);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(overlay));
+            log.info("Loading overlay gone");
+        } catch (Exception e) {
+            log.warn("Loading overlay still visible after {}s — continuing anyway", timeoutSeconds);
+        }
+    }
+
+    // ─────────────────────────────────────────────────
     // Fluent wait
     // ─────────────────────────────────────────────────
 

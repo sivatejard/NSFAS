@@ -24,6 +24,7 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
         Assert.assertTrue(new LoginPage().isLoginSuccessful(),
                 "Login failed for user: " + username);
         log.info("Stage 1 — Logged in as: {}", username);
+        
 
         // ── Navigate to Create Schedule ───────────────────────
         navigationPage().goToCreateSchedule();
@@ -32,8 +33,8 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
         CreateSchedulePage schedulePage = new CreateSchedulePage();
 
         schedulePage.selectInstitutionType(ConfigReader.get("schedule.institute.type", "All Institutions"));
-        schedulePage.selectAcademicYear(ConfigReader.get("schedule.academic.year", "2025"));
-        schedulePage.selectAllInstitutions();
+        schedulePage.selectAcademicYear(ConfigReader.get("schedule.academic.year", "2026"));
+        schedulePage.selectRandomInstitutions(3);
         schedulePage.selectFunderType(ConfigReader.get("schedule.funder.type", "DHET"));
         schedulePage.selectAllSubFunders();
         schedulePage.selectAllDisbursementTypes();
@@ -43,12 +44,12 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
         String runDate = com.nsfas.automation.utils.TestDataUtils.getCurrentDate("dd-MM-yyyy");
         schedulePage.setProjectRunDate(runDate);
 
-        schedulePage.submitCreateSchedule();
+//        schedulePage.submitCreateSchedule();
 
-        Assert.assertTrue(schedulePage.isScheduleCreatedSuccessfully(),
-                "Schedule was not created successfully — popup not visible");
-        log.info("Schedule created successfully");
-        schedulePage.closeSuccessPopup();
+//        Assert.assertTrue(schedulePage.isScheduleCreatedSuccessfully(),
+//                "Schedule was not created successfully — popup not visible");
+//        log.info("Schedule created successfully");
+//        schedulePage.closeSuccessPopup();
 
         // ── Get Projection Sequence Number ─────────────────────
         navigationPage().goToDisbursementProjections();

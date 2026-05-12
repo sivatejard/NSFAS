@@ -345,6 +345,15 @@ public class BasePage {
     }
 
     // ─────────────────────────────────────────────────
+    // Visual pacing helper (dev/debug mode)
+    // ─────────────────────────────────────────────────
+
+    /** 1-second pause — lets you watch each step in the browser during debugging. */
+    protected void pause() {
+        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+    }
+
+    // ─────────────────────────────────────────────────
     // Wait shortcuts
     // ─────────────────────────────────────────────────
 

@@ -14,8 +14,7 @@ import org.testng.annotations.Test;
 public class Step6_FinanceCOOTest extends DisbursementBaseTest {
 
     @Test(description = "Stage 6: Finance COO approves and routes to CFO",
-          groups = {"disbursement", "stage6"},
-          dependsOnGroups = {"stage5"})
+          groups = {"disbursement", "stage6"})
     public void stage6_cooRoute() {
 
         // ── Login ──────────────────────────────────────────────
@@ -26,8 +25,12 @@ public class Step6_FinanceCOOTest extends DisbursementBaseTest {
                 "Login failed for user: " + username);
         log.info("Stage 6 — Logged in as: {}", username);
 
+        // ── Resolve sequence number ────────────────────────────
+        String sequenceNumber = ConfigReader.get("sequence.number", "").trim();
+        if (sequenceNumber.isEmpty()) sequenceNumber = SharedTestData.getSequenceNumber();
+        log.info("Stage 6 — Using sequence number: {}", sequenceNumber);
+
         // ── Open Case ──────────────────────────────────────────
-        String sequenceNumber = SharedTestData.getSequenceNumber();
         openCaseBySequenceNumber(sequenceNumber);
 
         // ── Approve and Route to CFO ───────────────────────────

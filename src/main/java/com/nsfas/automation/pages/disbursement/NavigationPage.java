@@ -23,54 +23,36 @@ public class NavigationPage extends BasePage {
         return url.replaceAll("(https?://[^/]+).*", "$1");
     }
 
+    private void navigate(String path) {
+        String url = getAppRoot() + path;
+        log.info("Navigating to: {}", url);
+        driver.get(url);          // blocks until page load timeout (120s from config)
+        wait.waitForLoadingOverlay(120);  // also wait for any post-load spinner
+    }
+
     public void goToCreateSchedule() {
         log.info("Navigating to Create Schedule");
-        try {
-            jsClick(createScheduleLink);
-        } catch (Exception e) {
-            driver.get(getAppRoot() + "/CreateSchedule/Index");
-        }
-        wait.waitForPageLoad();
+        navigate("/CreateSchedule/Index");
     }
 
     public void goToDisbursementProjections() {
         log.info("Navigating to Disbursement Projections");
-        try {
-            jsClick(disbProjectionsLink);
-        } catch (Exception e) {
-            driver.get(getAppRoot() + "/DisbursementProjections/Index");
-        }
-        wait.waitForPageLoad();
+        navigate("/DisbursementProjections/Index");
     }
 
     public void goToMyTeamCases() {
         log.info("Navigating to My Team Cases");
-        try {
-            jsClick(myTeamCasesLink);
-        } catch (Exception e) {
-            driver.get(getAppRoot() + "/casemanagement/myteamcases");
-        }
-        wait.waitForPageLoad();
+        navigate("/casemanagement/myteamcases");
     }
 
     public void goToMyCases() {
         log.info("Navigating to My Cases");
-        try {
-            jsClick(myCasesLink);
-        } catch (Exception e) {
-            driver.get(getAppRoot() + "/casemanagement/mycases");
-        }
-        wait.waitForPageLoad();
+        navigate("/casemanagement/mycases");
     }
 
     public void goToCaseSearch() {
         log.info("Navigating to Case Search");
-        try {
-            jsClick(caseSearchLink);
-        } catch (Exception e) {
-            driver.get(getAppRoot() + "/casemanagement/casesearch");
-        }
-        wait.waitForPageLoad();
+        navigate("/casemanagement/casesearch");
     }
 
     // Convenience aliases kept for backward compatibility

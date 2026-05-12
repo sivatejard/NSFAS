@@ -14,8 +14,7 @@ import org.testng.annotations.Test;
 public class Step3_OperationsInitiatorTest extends DisbursementBaseTest {
 
     @Test(description = "Stage 3: Operations Initiator initiates disbursement",
-          groups = {"disbursement", "stage3"},
-          dependsOnGroups = {"stage2"})
+          groups = {"disbursement", "stage3"})
     public void stage3_operationsInitiatorRoute() {
 
         // ── Login ──────────────────────────────────────────────
@@ -26,8 +25,12 @@ public class Step3_OperationsInitiatorTest extends DisbursementBaseTest {
                 "Login failed for user: " + username);
         log.info("Stage 3 — Logged in as: {}", username);
 
+        // ── Resolve sequence number ────────────────────────────
+        String sequenceNumber = ConfigReader.get("sequence.number", "").trim();
+        if (sequenceNumber.isEmpty()) sequenceNumber = SharedTestData.getSequenceNumber();
+        log.info("Stage 3 — Using sequence number: {}", sequenceNumber);
+
         // ── Open Case ──────────────────────────────────────────
-        String sequenceNumber = SharedTestData.getSequenceNumber();
         openCaseBySequenceNumber(sequenceNumber);
 
         // ── Route with Disbursement Initiation outcome ─────────
