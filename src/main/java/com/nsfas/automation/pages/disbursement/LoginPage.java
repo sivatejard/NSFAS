@@ -2,6 +2,10 @@ package com.nsfas.automation.pages.disbursement;
 
 import com.nsfas.automation.pages.BasePage;
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 /**
  * Login page: http://10.15.64.77:85/Identity/Account/Login
@@ -22,7 +26,8 @@ public class LoginPage extends BasePage {
         type(usernameField, username);
         type(passwordField, password);
         click(loginButton);
-        wait.waitForPageLoad();
+        new WebDriverWait(driver, Duration.ofSeconds(120))
+                .until(ExpectedConditions.not(ExpectedConditions.urlContains("Login")));
         log.info("Login submitted for user: {}", username);
         return this;
     }

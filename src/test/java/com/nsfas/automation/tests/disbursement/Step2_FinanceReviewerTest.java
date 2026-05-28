@@ -1,6 +1,7 @@
 package com.nsfas.automation.tests.disbursement;
 
 import com.nsfas.automation.config.ConfigReader;
+import com.nsfas.automation.constants.RoutingOutcome;
 import com.nsfas.automation.pages.disbursement.LoginPage;
 import com.nsfas.automation.pages.disbursement.RelatedEntitiesPage;
 import com.nsfas.automation.pages.disbursement.RequestAttributeRoutingPage;
@@ -42,8 +43,8 @@ public class Step2_FinanceReviewerTest extends DisbursementBaseTest {
         RelatedEntitiesPage relatedEntities = new RelatedEntitiesPage();
         try {
             relatedEntities.clickRelatedEntities();
-            relatedEntities.logSummary();
-            log.info("Related Entities tab reviewed successfully");
+           // relatedEntities.logSummary();
+           // log.info("Related Entities tab reviewed successfully");
         } catch (Exception e) {
             // Tab locators are not yet confirmed — log and continue rather than fail
             log.warn("Could not open Related Entities tab (locators may need update): {}", e.getMessage());
@@ -55,10 +56,11 @@ public class Step2_FinanceReviewerTest extends DisbursementBaseTest {
 
         String approvedComment = ConfigReader.get("comment.approved", "Approved");
         routing.enterFinancialComment(approvedComment);
+        routing.ensureRoutingTabActive();
 
         // Log available next-step options for debugging
         log.info("Available routing options: {}", routing.getAvailableNextStepOptions());
-        routing.selectOutcome("Approve for Projection");
+        routing.selectOutcome(RoutingOutcome.APPROVE_FOR_PROJECTION);
 
         routing.clickRouteButton();
 

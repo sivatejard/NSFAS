@@ -1,6 +1,7 @@
 package com.nsfas.automation.tests.disbursement;
 
 import com.nsfas.automation.config.ConfigReader;
+import com.nsfas.automation.constants.RoutingOutcome;
 import com.nsfas.automation.pages.disbursement.LoginPage;
 import com.nsfas.automation.pages.disbursement.RequestAttributeRoutingPage;
 import com.nsfas.automation.utils.SharedTestData;
@@ -36,7 +37,7 @@ public class Step3_OperationsInitiatorTest extends DisbursementBaseTest {
         // ── Route with Disbursement Initiation outcome ─────────
         RequestAttributeRoutingPage routing = routingPage();
         routing.clickRequestAttributeAndRouting();
-        routing.selectOutcome("Disbursement initiation");
+        routing.selectOutcome(RoutingOutcome.DISBURSEMENT_INITIATION);
         routing.clickRouteButton();
 
         log.info("Stage 3 COMPLETE — Disbursement initiated | Sequence: {}", sequenceNumber);

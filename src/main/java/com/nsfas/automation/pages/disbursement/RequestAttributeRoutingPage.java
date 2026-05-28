@@ -203,4 +203,18 @@ public class RequestAttributeRoutingPage extends BasePage {
             return false;
         }
     }
+
+    /**
+     * Ensures the Request Attributes & Routing tab is the active tab.
+     * After entering a comment and clicking Save, the app sometimes navigates
+     * back to the General Information tab — this re-clicks the routing tab if that happened.
+     */
+    public void ensureRoutingTabActive() {
+        if (!isRoutingTabActive()) {
+            log.info("Routing tab is not active (app navigated away) — re-clicking it");
+            clickRequestAttributeAndRouting();
+        } else {
+            log.info("Routing tab already active — continuing");
+        }
+    }
 }

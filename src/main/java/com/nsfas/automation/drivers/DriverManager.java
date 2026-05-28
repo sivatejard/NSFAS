@@ -53,7 +53,8 @@ public class DriverManager {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(
                 Long.parseLong(ConfigReader.get("implicit.wait", "10"))));
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(
-                Long.parseLong(ConfigReader.get("page.load.timeout", "30"))));
+                Long.parseLong(ConfigReader.get("page.load.timeout", "120"))));
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(120));
 
         driverThreadLocal.set(driver);
         log.info("Driver initialized successfully");

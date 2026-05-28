@@ -1,6 +1,7 @@
 package com.nsfas.automation.tests.disbursement;
 
 import com.nsfas.automation.config.ConfigReader;
+import com.nsfas.automation.constants.RoutingOutcome;
 import com.nsfas.automation.pages.disbursement.LoginPage;
 import com.nsfas.automation.pages.disbursement.RequestAttributeRoutingPage;
 import com.nsfas.automation.utils.SharedTestData;
@@ -39,7 +40,8 @@ public class Step4_FirstApproverTest extends DisbursementBaseTest {
 
         String approvedComment = ConfigReader.get("comment.approved", "Approved");
         routing.enterFirstApproverComment(approvedComment);
-        routing.selectOutcome("Approved route to senior manager");
+        routing.ensureRoutingTabActive();
+        routing.selectOutcome(RoutingOutcome.ROUTE_TO_SENIOR_MANAGER);
         routing.clickRouteButton();
 
         log.info("Stage 4 COMPLETE — First Approver routed to Senior Manager | Sequence: {}", sequenceNumber);

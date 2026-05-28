@@ -1,6 +1,7 @@
 package com.nsfas.automation.tests.disbursement;
 
 import com.nsfas.automation.config.ConfigReader;
+import com.nsfas.automation.constants.RoutingOutcome;
 import com.nsfas.automation.pages.disbursement.LoginPage;
 import com.nsfas.automation.pages.disbursement.RequestAttributeRoutingPage;
 import com.nsfas.automation.utils.SharedTestData;
@@ -39,7 +40,8 @@ public class Step6_FinanceCOOTest extends DisbursementBaseTest {
 
         String approvedComment = ConfigReader.get("comment.approved", "Approved");
         routing.enterCOOComment(approvedComment);
-        routing.selectOutcome("Approved route to CFO");
+        routing.ensureRoutingTabActive();
+        routing.selectOutcome(RoutingOutcome.ROUTE_TO_CFO);
         routing.clickRouteButton();
 
         log.info("Stage 6 COMPLETE — COO routed to CFO | Sequence: {}", sequenceNumber);

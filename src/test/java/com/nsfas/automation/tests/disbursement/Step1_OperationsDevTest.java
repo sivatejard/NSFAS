@@ -34,7 +34,7 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
 
         schedulePage.selectInstitutionType(ConfigReader.get("schedule.institute.type", "All Institutions"));
         schedulePage.selectAcademicYear(ConfigReader.get("schedule.academic.year", "2026"));
-        schedulePage.selectRandomInstitutions(3);
+        schedulePage.selectAllInstitutions();
         schedulePage.selectFunderType(ConfigReader.get("schedule.funder.type", "DHET"));
         schedulePage.selectAllSubFunders();
         schedulePage.selectAllDisbursementTypes();
@@ -44,12 +44,11 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
         String runDate = com.nsfas.automation.utils.TestDataUtils.getCurrentDate("dd-MM-yyyy");
         schedulePage.setProjectRunDate(runDate);
 
-//        schedulePage.submitCreateSchedule();
-
-//        Assert.assertTrue(schedulePage.isScheduleCreatedSuccessfully(),
-//                "Schedule was not created successfully — popup not visible");
-//        log.info("Schedule created successfully");
-//        schedulePage.closeSuccessPopup();
+        boolean created = schedulePage.submitWithRetry(5);
+        Assert.assertTrue(created,
+                "Schedule creation failed after 5 attempts — check toast messages in logs");
+        log.info("Schedule created successfully");
+        schedulePage.closeSuccessPopup();
 
         // ── Get Projection Sequence Number ─────────────────────
         navigationPage().goToDisbursementProjections();
@@ -64,6 +63,7 @@ public class Step1_OperationsDevTest extends DisbursementBaseTest {
                 "Projection sequence number is empty — cannot proceed to next stages");
 
         SharedTestData.setSequenceNumber(sequenceNumber);
+        ConfigReader.set("sequence.number", sequenceNumber);  // persists to disk + system property
         log.info("Projection sequence number captured and stored: {}", sequenceNumber);
 
         // ── Route Case to Finance Review ───────────────────────

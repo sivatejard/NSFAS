@@ -27,9 +27,15 @@ public class CreateSchedulePage extends BasePage {
 
     private final By projectRunDateInput  = By.id("ProjectRunDate");
     private final By createScheduleSubmit = By.xpath("//button[@type='button' and normalize-space()='Create Schedule']");
-    // Success popup after schedule creation — SweetAlert2 or similar
-    private final By successNotification  = By.cssSelector(".swal2-popup, .swal2-success, .alert-success, .toast-success");
-    private final By popupOkButton        = By.cssSelector(".swal2-confirm, .swal2-popup button, button.confirm");
+
+    // Toast notification locators (confirmed from live app HTML)
+    // Container: div#toast-container.toast-top-right
+    // Each toast: div.toast.toast-success or div.toast.toast-error
+    private final By toastSuccess    = By.cssSelector("#toast-container .toast.toast-success");
+    private final By toastError      = By.cssSelector("#toast-container .toast.toast-error");
+    private final By anyToast        = By.cssSelector("#toast-container .toast");
+    private final By toastMessageEl  = By.cssSelector("#toast-container .toast-message");
+    private final By toastTitleEl    = By.cssSelector("#toast-container .toast-title");
 
     // ── Select2 helpers ────────────────────────────────────────────────────────
 
@@ -195,7 +201,17 @@ public class CreateSchedulePage extends BasePage {
     public void setProjectRunDate(String date) {
         pause();
         log.info("Setting project run date: {}", date);
-        clearAndType(projectRunDateInput, date);
+        // HTML date inputs require yyyy-MM-dd; convert dd-MM-yyyy if needed
+        String isoDate = date;
+        if (date.matches("\\d{2}-\\d{2}-\\d{4}")) {
+            String[] p = date.split("-");
+            isoDate = p[2] + "-" + p[1] + "-" + p[0];
+        }
+        org.openqa.selenium.WebElement el = driver.findElement(projectRunDateInput);
+        executeJS("arguments[0].value = arguments[1];", el, isoDate);
+        executeJS("arguments[0].dispatchEvent(new Event('input',  {bubbles:true}));", el);
+        executeJS("arguments[0].dispatchEvent(new Event('change', {bubbles:true}));", el);
+        log.info("Project run date set (ISO): {}", isoDate);
     }
 
     public void submitCreateSchedule() {
@@ -204,29 +220,163 @@ public class CreateSchedulePage extends BasePage {
         jsClick(createScheduleSubmit);
     }
 
+    /**
+     * Submits the Create Schedule form and retries with fresh random institutions
+     * whenever the server responds with "No students found for disbursement".
+     *
+     * Flow (confirmed from live app):
+     *   1. Inject JS MutationObserver on toast-container BEFORE clicking submit
+     *   2. Click Create Schedule
+     *   3. Loading overlay appears immediately and runs 30s – 5 min
+     *   4. Overlay disappears → toast appears briefly (success or error)
+     *   5. Read captured toast (even if already gone) via JS observer
+     *   6. If "No students found" → pick fresh institutions and retry
+     *
+     * Returns true on success, false if unrecoverable error or all retries exhausted.
+     */
+    public boolean submitWithRetry(int maxAttempts) {
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            log.info("Create Schedule submit — attempt {}/{}", attempt, maxAttempts);
+            pause();
+            jsClick(createScheduleSubmit);
+
+            // Wait for overlay to start then finish (30s – 5 min)
+            log.info("Attempt {}: waiting for loading overlay...", attempt);
+            try {
+                wait.waitForVisibility(By.cssSelector("div.loadingoverlay"), 15);
+                log.info("Attempt {}: loading overlay started", attempt);
+            } catch (Exception ignored) {
+                log.warn("Attempt {}: overlay did not appear within 15s", attempt);
+            }
+            wait.waitForLoadingOverlay(600);
+            log.info("Attempt {}: loading overlay cleared", attempt);
+
+            // SUCCESS: app auto-redirects to DisbursementProjections on success
+            String currentUrl = driver.getCurrentUrl();
+            log.info("Attempt {}: current URL after overlay = {}", attempt, currentUrl);
+
+            if (currentUrl.toLowerCase().contains("disbursementprojections")) {
+                log.info("Attempt {}: SUCCESS — redirected to Disbursement Projections", attempt);
+                return true;
+            }
+
+            // Still on CreateSchedule — error toast appeared (short-lived)
+            // Read it from live DOM or fallback message
+            String errorMsg = "";
+            if (isToastPresent(toastError, 5)) {
+                errorMsg = readToastMessage();
+            }
+            log.warn("Attempt {}: still on CreateSchedule — error: '{}'", attempt, errorMsg);
+
+            if (attempt < maxAttempts) {
+                log.warn("Attempt {}: error '{}' — retrying with all institutions...", attempt, errorMsg);
+                waitForToastToDisappear();
+                selectAllInstitutions();
+                continue;
+            }
+
+            log.error("Attempt {}: schedule creation failed — '{}'", attempt, errorMsg);
+            return false;
+        }
+        log.error("Schedule creation failed after {} attempts", maxAttempts);
+        return false;
+    }
+
+    /**
+     * Injects a MutationObserver on #toast-container that captures the first
+     * toast (success or error) into window._toastCapture as soon as it appears.
+     * Must be called before clicking submit so no toast is missed.
+     */
+    private void injectToastObserver() {
+        String js =
+            "window._toastCapture = null;" +
+            "if (window._toastObserver) { window._toastObserver.disconnect(); }" +
+            "var container = document.getElementById('toast-container');" +
+            "if (!container) { return 'no #toast-container'; }" +
+            "window._toastObserver = new MutationObserver(function(mutations) {" +
+            "  mutations.forEach(function(m) {" +
+            "    m.addedNodes.forEach(function(node) {" +
+            "      if (node.nodeType !== 1 || window._toastCapture) return;" +
+            "      var ok  = node.classList.contains('toast-success');" +
+            "      var err = node.classList.contains('toast-error');" +
+            "      if (ok || err) {" +
+            "        var msgEl = node.querySelector('.toast-message');" +
+            "        window._toastCapture = {" +
+            "          type:    ok ? 'success' : 'error'," +
+            "          message: msgEl ? msgEl.textContent.trim() : ''" +
+            "        };" +
+            "      }" +
+            "    });" +
+            "  });" +
+            "});" +
+            "window._toastObserver.observe(container, {childList: true});" +
+            "return 'observer ready';";
+        Object result = executeJS(js);
+        log.info("Toast observer: {}", result);
+    }
+
+    /**
+     * Reads the toast captured by the JS observer.
+     * Falls back to checking visible toasts in case the observer missed anything.
+     * Returns String[]{type, message} where type is "success", "error", or "".
+     */
+    private String[] readCapturedToast() {
+        String js = "if (!window._toastCapture) return null;" +
+                    "return [window._toastCapture.type, window._toastCapture.message];";
+        Object result = executeJS(js);
+
+        if (result instanceof java.util.List) {
+            java.util.List<?> list = (java.util.List<?>) result;
+            String type = list.size() > 0 && list.get(0) != null ? list.get(0).toString() : "";
+            String msg  = list.size() > 1 && list.get(1) != null ? list.get(1).toString() : "";
+            return new String[]{type, msg};
+        }
+
+        // Observer missed it — fall back to checking live DOM
+        if (isToastPresent(toastSuccess, 3)) return new String[]{"success", readToastMessage()};
+        if (isToastPresent(toastError,   3)) return new String[]{"error",   readToastMessage()};
+        return new String[]{"", ""};
+    }
+
     public boolean isScheduleCreatedSuccessfully() {
-        // Schedule creation triggers a long-running server job (up to 10 min on VPN).
-        // Wait for the loading overlay to finish before checking for the success popup.
         wait.waitForLoadingOverlay(600);
+        return isToastPresent(toastSuccess, 30);
+    }
+
+    public String getToastMessage() {
+        return readToastMessage();
+    }
+
+    public void closeSuccessPopup() {
+        waitForToastToDisappear();
+    }
+
+    // ── Toast helpers ──────────────────────────────────────────────────────────
+
+    private boolean isToastPresent(By locator, int timeoutSeconds) {
         try {
-            wait.waitForVisibility(successNotification, 30);
+            wait.waitForVisibility(locator, timeoutSeconds);
             return true;
         } catch (Exception e) {
-            log.warn("Success notification not found after overlay disappeared");
             return false;
         }
     }
 
-    public String getSuccessMessage() {
-        if (isElementPresent(successNotification)) {
-            return getText(successNotification);
+    private String readToastMessage() {
+        try {
+            return driver.findElement(toastMessageEl).getText().trim();
+        } catch (Exception e) {
+            try {
+                return driver.findElement(anyToast).getText().trim();
+            } catch (Exception ex) {
+                return "";
+            }
         }
-        return "";
     }
 
-    public void closeSuccessPopup() {
-        if (isElementPresent(popupOkButton)) {
-            click(popupOkButton);
-        }
+    private void waitForToastToDisappear() {
+        try {
+            wait.waitForInvisibility(anyToast, 10);
+        } catch (Exception ignored) {}
     }
 }
